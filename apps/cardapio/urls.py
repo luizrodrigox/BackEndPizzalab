@@ -1,7 +1,10 @@
 from django.urls import path
-from .views import listaCardapio, detalhePizza
+from . import views
 
 urlpatterns = [
-    path('', listaCardapio),
-    path('<int:id>/', detalhePizza),
+    path('', views.listar),
+    path('criar/', views.criar),
+    path('<int:id>/', views.detalhe),
+    path('atualizar/<int:id>/', views.atualizar),
+    path('deletar/<int:id>/', views.deletar),
 ]

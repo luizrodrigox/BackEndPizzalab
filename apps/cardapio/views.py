@@ -1,42 +1,57 @@
-from django.shortcuts import render
 from django.http import JsonResponse
-# Create your views here.
+from .models import Pizza
+import json
+from django.views.decorators.csrf import csrf_exempt
 
-cardapio = [
-        {"id": 1,
-         "nome": "Moda da Casa", 
-         "Preco": 40.00},
+@csrf_exempt
+def criar(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        pizza = Pizza.objects.create(
+            nome = data["nome"],
+            preco = data["preco"]
+        )
+        return JsonResponse({"id": pizza.id})
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
-        {"id": 2,
-         "nome": "Frango com Catupiry", 
-         "Preco": 30.00},
 
-        {"id": 3,
-         "nome": "Carne de Sol", 
-         "Preco": 35.00},
+def listar(request):
+    if request.method == "GET":
+        return JsonResponse(list(Pizza.objects.values()), safe = False)
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
-        {"id": 4,
-         "nome": "Calabresa", 
-         "Preco": 30.00},
 
-        {"id": 5,
-         "nome": "Nordestina", 
-         "Preco": 35.00},
-    ]
+def detalhe(request, id):
+    if request.method == "GET":
+        pizza = Pizza.objects.filter(id = id).values().first()
+        return JsonResponse(pizza or {"erro": "Não encontrada"})
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
-def buscar_por_id(lista, id):
-    for item in lista:
-        if item.get("id") == id:
-            return item
-    return None
+@csrf_exempt
+def atualizar(request, id):
+    if request.method == "PUT":
+        try:
+            data = json.loads(request.body)
+            pizza = Pizza.objects.get(id = id)
+            pizza.nome = data["nome"]
+            pizza.preco = data["preco"]
+            pizza.save()
+            return JsonResponse({"msg": "Atualizado"})
+        except Pizza.DoesNotExist:
+            return JsonResponse({"erro": "Não encontrada"})
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
-def listaCardapio(request):
-    return JsonResponse(cardapio, safe=False)
-
-def detalhePizza(request, id):
-    pizza = buscar_por_id(cardapio, id)
-
-    if pizza:
-        return JsonResponse(pizza)
-
-    return JsonResponse({"erro": "Pizza não encontrada"})
+@csrf_exempt
+def deletar(request, id):
+    if request.method == "DELETE":
+        try:
+            Pizza.objects.get(id = id).delete()
+            return JsonResponse({"msg": "Deletado"})
+        except Pizza.DoesNotExist:
+            return JsonResponse({"erro": "Não encontrada"})
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)

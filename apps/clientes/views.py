@@ -1,31 +1,57 @@
-from django.shortcuts import render
 from django.http import JsonResponse
+from .models import Cliente
+import json
+from django.views.decorators.csrf import csrf_exempt
 
-# Create your views here.
+@csrf_exempt
+def criar(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        cliente = Cliente.objects.create(
+            nome = data["nome"],
+            telefone = data["telefone"]
+        )
+        return JsonResponse({"id": cliente.id})
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
-clientes = [
-        {"id": 1,
-         "nome": "João Silva",
-         "telefone": "99999-9999"},
 
-        {"id": 2,
-         "nome": "Maria Souza",
-         "telefone": "88888-8888"},
-    ]
+def listar(request):
+    if request.method == "GET":
+        return JsonResponse(list(Cliente.objects.values()), safe = False)
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
-def buscar_por_id(lista, id):
-    for item in lista:
-        if item.get("id") == id:
-            return item
-    return None
 
-def listaClientes(request):
-    return JsonResponse(clientes, safe=False)
+def detalhe(request, id):
+    if request.method == "GET":
+        cliente = Cliente.objects.filter(id = id).values().first()
+        return JsonResponse(cliente or {"erro": "Não encontrado"})
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
-def detalheCliente(request, id):
-    cliente = buscar_por_id(clientes, id)
+@csrf_exempt
+def atualizar(request, id):
+    if request.method == "PUT":
+        try:
+            data = json.loads(request.body)
+            cliente = Cliente.objects.get(id = id)
+            cliente.nome = data["nome"]
+            cliente.telefone = data["telefone"]
+            cliente.save()
+            return JsonResponse({"msg": "Atualizado"})
+        except Cliente.DoesNotExist:
+            return JsonResponse({"erro": "Não encontrado"})
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
-    if cliente:
-        return JsonResponse(cliente)
-
-    return JsonResponse({"erro": "Cliente não encontrado"})   
+@csrf_exempt
+def deletar(request, id):
+    if request.method == "DELETE":
+        try:
+            Cliente.objects.get(id = id).delete()
+            return JsonResponse({"msg": "Deletado"})
+        except Cliente.DoesNotExist:
+            return JsonResponse({"erro": "Não encontrado"})
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)

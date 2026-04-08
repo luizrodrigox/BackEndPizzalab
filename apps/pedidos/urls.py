@@ -1,7 +1,10 @@
 from django.urls import path
-from .views import listaPedidos, detalhePedido
+from . import views
 
 urlpatterns = [
-    path('', listaPedidos),
-    path('<int:id>/', detalhePedido),
+    path('', views.listar),
+    path('criar/', views.criar),
+    path('<int:id>/', views.detalhe),
+    path('atualizar/<int:id>/', views.atualizar),
+    path('deletar/<int:id>/', views.deletar),
 ]

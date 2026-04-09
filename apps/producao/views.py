@@ -1,31 +1,67 @@
-from django.shortcuts import render
 from django.http import JsonResponse
+from .models import Producao
+from apps.pedidos.models import Pedido
+import json
+from django.views.decorators.csrf import csrf_exempt
 
-# Create your views here.
+@csrf_exempt
+def criar(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
 
-producao = [
-        {"id": 1,
-         "pedido_id": 1,
-         "status": "Em preparo"},
+        pedido = Pedido.objects.get(id = data["pedido_id"])
+        prod = Producao.objects.create(
+            pedido = pedido,
+            status = data["status"]
+        )
 
-        {"id": 2,
-         "pedido_id": 2,
-         "status": "Saiu para entrega"},
-    ]
+        return JsonResponse({"id": prod.id})
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
-def buscar_por_id(lista, id):
-    for item in lista:
-        if item.get("id") == id:
-            return item
-    return None
 
-def listaProducao(request):
-    return JsonResponse(producao, safe=False)
+def listar(request):
+    if request.method == "GET":
+        return JsonResponse(list(Producao.objects.values()), safe = False)
+    
+    return JsonResponse({"erro": "Método não permitido"}, statu = 405)
 
-def detalheProducao(request, id):
-    status = buscar_por_id(producao, id)
 
-    if status:
-        return JsonResponse(status)
+def detalhe(request, id):
+    if request.method == "GET":
+        try:
+            prod = Producao.objects.get(id = id)
+            return JsonResponse({
+                "id": prod.id,
+                "pedido_id": prod.pedido.id,
+                "status": prod.status
+            })
+        except Producao.DoesNotExist:
+            return JsonResponse({"erro": "Não encontrado"})
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
-    return JsonResponse({"erro": "Status não encontrado"})
+@csrf_exempt
+def atualizar(request, id):
+    if request.method == "PUT":
+        try:
+            data = json.loads(request.body)
+            prod = Producao.objects.get(id = id)
+            prod.status = data["status"]
+            prod.save()
+            return JsonResponse({"msg": "Atualizado"})
+        except Producao.DoesNotExist:
+            return JsonResponse({"erro": "Não encontrado"})
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)
+
+@csrf_exempt
+def deletar(request, id):
+    if request.method == "DELETE":
+        try:
+            Producao.objects.get(id = id).delete()
+            return JsonResponse({"msg": "Deletado"})
+        except Producao.DoesNotExist:
+            return JsonResponse({"erro": "Não encontrado"})
+    
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)

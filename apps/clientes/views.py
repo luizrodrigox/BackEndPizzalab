@@ -2,17 +2,24 @@ from django.http import JsonResponse
 from .models import Cliente
 import json
 from django.views.decorators.csrf import csrf_exempt
+from .forms import ClienteForm
 
 @csrf_exempt
 def criar(request):
     if request.method == "POST":
-        data = json.loads(request.body)
-        cliente = Cliente.objects.create(
-            nome = data["nome"],
-            telefone = data["telefone"]
-        )
-        return JsonResponse({"id": cliente.id})
-    
+        try:
+            data = json.loads(request.body)
+        except:
+            return JsonResponse({"erro": "JSON inválido"}, status = 400)
+
+        form = ClienteForm(data)
+
+        if form.is_valid():
+            cliente = form.save()
+            return JsonResponse({"id": cliente.id})
+
+        return JsonResponse(form.errors, status=400)
+
     return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
 
@@ -34,15 +41,23 @@ def detalhe(request, id):
 def atualizar(request, id):
     if request.method == "PUT":
         try:
-            data = json.loads(request.body)
-            cliente = Cliente.objects.get(id = id)
-            cliente.nome = data["nome"]
-            cliente.telefone = data["telefone"]
-            cliente.save()
-            return JsonResponse({"msg": "Atualizado"})
+            cliente = Cliente.objects.get(id=id)
         except Cliente.DoesNotExist:
-            return JsonResponse({"erro": "Não encontrado"})
-    
+            return JsonResponse({"erro": "Não encontrado"}, status = 404)
+
+        try:
+            data = json.loads(request.body)
+        except:
+            return JsonResponse({"erro": "JSON inválido"}, status = 400)
+
+        form = ClienteForm(data, instance=cliente)
+
+        if form.is_valid():
+            form.save()
+            return JsonResponse({"msg": "Atualizado"})
+
+        return JsonResponse(form.errors, status = 400)
+
     return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
 @csrf_exempt

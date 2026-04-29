@@ -4,23 +4,36 @@ from apps.clientes.models import Cliente
 from apps.cardapio.models import Pizza
 import json
 from django.views.decorators.csrf import csrf_exempt
+from .forms import PedidoForm
 
 @csrf_exempt
 def criar(request):
     if request.method == "POST":
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except:
+            return JsonResponse({"erro": "JSON inválido"}, status = 400)
 
-        cliente = Cliente.objects.get(id = data["cliente_id"])
-        pedido = Pedido.objects.create(
-            cliente = cliente,
-            status = data["status"]
-        )
+        try:
+            cliente = Cliente.objects.get(id=data["cliente_id"])
+        except Cliente.DoesNotExist:
+            return JsonResponse({"erro": "Cliente não encontrado"}, status = 404)
 
-        pizzas = Pizza.objects.filter(id__in = data["pizzas_ids"])
-        pedido.pizzas.set(pizzas)
+        form = PedidoForm({
+            "cliente": cliente.id,
+            "status": data.get("status")
+        })
 
-        return JsonResponse({"id": pedido.id})
-    
+        if form.is_valid():
+            pedido = form.save()
+
+            pizzas = Pizza.objects.filter(id__in=data.get("pizzas_ids", []))
+            pedido.pizzas.set(pizzas)
+
+            return JsonResponse({"id": pedido.id})
+
+        return JsonResponse(form.errors, status = 400)
+
     return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
 
@@ -58,25 +71,31 @@ def detalhe(request, id):
 def atualizar(request, id):
     if request.method == "PUT":
         try:
+            pedido = Pedido.objects.get(id=id)
+        except Pedido.DoesNotExist:
+            return JsonResponse({"erro": "Não encontrado"}, status = 404)
+
+        try:
             data = json.loads(request.body)
-            pedido = Pedido.objects.get(id = id)
+        except:
+            return JsonResponse({"erro": "JSON inválido"}, status = 400)
 
-            if "cliente_id" in data:
-                pedido.cliente = Cliente.objects.get(id = data["cliente_id"])
+        form = PedidoForm({
+            "cliente": data.get("cliente_id", pedido.cliente.id),
+            "status": data.get("status", pedido.status)
+        }, instance=pedido)
 
-            if "status" in data:
-                pedido.status = data["status"]
-
-            pedido.save()
+        if form.is_valid():
+            form.save()
 
             if "pizzas_ids" in data:
-                pizzas = Pizza.objects.filter(id__in = data["pizzas_ids"])
+                pizzas = Pizza.objects.filter(id__in=data["pizzas_ids"])
                 pedido.pizzas.set(pizzas)
 
             return JsonResponse({"msg": "Atualizado"})
-        except Pedido.DoesNotExist:
-            return JsonResponse({"erro": "Não encontrado"})
-    
+
+        return JsonResponse(form.errors, status = 400)
+
     return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
 @csrf_exempt

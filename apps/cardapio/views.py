@@ -2,19 +2,25 @@ from django.http import JsonResponse
 from .models import Pizza
 import json
 from django.views.decorators.csrf import csrf_exempt
+from .forms import PizzaForm
 
 @csrf_exempt
 def criar(request):
     if request.method == "POST":
-        data = json.loads(request.body)
-        pizza = Pizza.objects.create(
-            nome = data["nome"],
-            preco = data["preco"]
-        )
-        return JsonResponse({"id": pizza.id})
-    
-    return JsonResponse({"erro": "Método não permitido"}, status = 405)
+        try:
+            data = json.loads(request.body)
+        except:
+            return JsonResponse({"erro": "JSON inválido"}, status = 400)
 
+        form = PizzaForm(data)
+
+        if form.is_valid():
+            pizza = form.save()
+            return JsonResponse({"id": pizza.id})
+
+        return JsonResponse(form.errors, status=400)
+
+    return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
 def listar(request):
     if request.method == "GET":
@@ -34,15 +40,23 @@ def detalhe(request, id):
 def atualizar(request, id):
     if request.method == "PUT":
         try:
-            data = json.loads(request.body)
-            pizza = Pizza.objects.get(id = id)
-            pizza.nome = data["nome"]
-            pizza.preco = data["preco"]
-            pizza.save()
-            return JsonResponse({"msg": "Atualizado"})
+            pizza = Pizza.objects.get(id=id)
         except Pizza.DoesNotExist:
-            return JsonResponse({"erro": "Não encontrada"})
-    
+            return JsonResponse({"erro": "Não encontrada"}, status = 404)
+
+        try:
+            data = json.loads(request.body)
+        except:
+            return JsonResponse({"erro": "JSON inválido"}, status = 400)
+
+        form = PizzaForm(data, instance=pizza)
+
+        if form.is_valid():
+            form.save()
+            return JsonResponse({"msg": "Atualizado"})
+
+        return JsonResponse(form.errors, status = 400)
+
     return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
 @csrf_exempt

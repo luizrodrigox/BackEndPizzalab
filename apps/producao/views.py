@@ -3,20 +3,32 @@ from .models import Producao
 from apps.pedidos.models import Pedido
 import json
 from django.views.decorators.csrf import csrf_exempt
+from .forms import ProducaoForm
 
 @csrf_exempt
 def criar(request):
     if request.method == "POST":
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except:
+            return JsonResponse({"erro": "JSON inválido"}, status = 400)
 
-        pedido = Pedido.objects.get(id = data["pedido_id"])
-        prod = Producao.objects.create(
-            pedido = pedido,
-            status = data["status"]
-        )
+        try:
+            pedido = Pedido.objects.get(id=data["pedido_id"])
+        except Pedido.DoesNotExist:
+            return JsonResponse({"erro": "Pedido não encontrado"}, status = 404)
 
-        return JsonResponse({"id": prod.id})
-    
+        form = ProducaoForm({
+            "pedido": pedido.id,
+            "status": data.get("status")
+        })
+
+        if form.is_valid():
+            prod = form.save()
+            return JsonResponse({"id": prod.id})
+
+        return JsonResponse(form.errors, status = 400)
+
     return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
 
@@ -45,14 +57,26 @@ def detalhe(request, id):
 def atualizar(request, id):
     if request.method == "PUT":
         try:
-            data = json.loads(request.body)
-            prod = Producao.objects.get(id = id)
-            prod.status = data["status"]
-            prod.save()
-            return JsonResponse({"msg": "Atualizado"})
+            prod = Producao.objects.get(id=id)
         except Producao.DoesNotExist:
-            return JsonResponse({"erro": "Não encontrado"})
-    
+            return JsonResponse({"erro": "Não encontrado"}, status = 404)
+
+        try:
+            data = json.loads(request.body)
+        except:
+            return JsonResponse({"erro": "JSON inválido"}, status = 400)
+
+        form = ProducaoForm({
+            "pedido": prod.pedido.id,
+            "status": data.get("status")
+        }, instance=prod)
+
+        if form.is_valid():
+            form.save()
+            return JsonResponse({"msg": "Atualizado"})
+
+        return JsonResponse(form.errors, status = 400)
+
     return JsonResponse({"erro": "Método não permitido"}, status = 405)
 
 @csrf_exempt

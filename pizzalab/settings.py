@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from decouple import config
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -46,6 +47,8 @@ INSTALLED_APPS = [
     'apps.clientes',
     'apps.cardapio',
     'apps.producao',
+    'apps.usuarios',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -135,3 +138,15 @@ TEMPLATES[0]['DIRS'] = [os.path.join(BASE_DIR, 'templates')]
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+# Autenticação JWT
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+SIMPLE_JWT = {
+    'ACESS_TOKEN_LIFETIME': timedelta(hours = 1),
+}

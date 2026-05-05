@@ -3,10 +3,15 @@ from .models import Cliente
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .forms import ClienteForm
+from utils.auth import verificar_token
 
 @csrf_exempt
 def criar(request):
     if request.method == "POST":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             data = json.loads(request.body)
         except:
@@ -25,6 +30,10 @@ def criar(request):
 
 def listar(request):
     if request.method == "GET":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         return JsonResponse(list(Cliente.objects.values()), safe = False)
     
     return JsonResponse({"erro": "Método não permitido"}, status = 405)
@@ -32,6 +41,10 @@ def listar(request):
 
 def detalhe(request, id):
     if request.method == "GET":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         cliente = Cliente.objects.filter(id = id).values().first()
         return JsonResponse(cliente or {"erro": "Não encontrado"})
     
@@ -40,6 +53,10 @@ def detalhe(request, id):
 @csrf_exempt
 def atualizar(request, id):
     if request.method == "PUT":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             cliente = Cliente.objects.get(id=id)
         except Cliente.DoesNotExist:
@@ -63,6 +80,10 @@ def atualizar(request, id):
 @csrf_exempt
 def deletar(request, id):
     if request.method == "DELETE":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             Cliente.objects.get(id = id).delete()
             return JsonResponse({"msg": "Deletado"})

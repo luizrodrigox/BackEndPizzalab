@@ -4,10 +4,15 @@ from apps.pedidos.models import Pedido
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .forms import ProducaoForm
+from utils.auth import verificar_token
 
 @csrf_exempt
 def criar(request):
     if request.method == "POST":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             data = json.loads(request.body)
         except:
@@ -34,6 +39,10 @@ def criar(request):
 
 def listar(request):
     if request.method == "GET":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         return JsonResponse(list(Producao.objects.values()), safe = False)
     
     return JsonResponse({"erro": "Método não permitido"}, statu = 405)
@@ -41,6 +50,10 @@ def listar(request):
 
 def detalhe(request, id):
     if request.method == "GET":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             prod = Producao.objects.get(id = id)
             return JsonResponse({
@@ -56,6 +69,10 @@ def detalhe(request, id):
 @csrf_exempt
 def atualizar(request, id):
     if request.method == "PUT":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             prod = Producao.objects.get(id=id)
         except Producao.DoesNotExist:
@@ -82,6 +99,10 @@ def atualizar(request, id):
 @csrf_exempt
 def deletar(request, id):
     if request.method == "DELETE":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             Producao.objects.get(id = id).delete()
             return JsonResponse({"msg": "Deletado"})

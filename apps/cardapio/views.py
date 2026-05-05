@@ -3,10 +3,15 @@ from .models import Pizza
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .forms import PizzaForm
+from utils.auth import verificar_token
 
 @csrf_exempt
 def criar(request):
     if request.method == "POST":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             data = json.loads(request.body)
         except:
@@ -39,6 +44,10 @@ def detalhe(request, id):
 @csrf_exempt
 def atualizar(request, id):
     if request.method == "PUT":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             pizza = Pizza.objects.get(id=id)
         except Pizza.DoesNotExist:
@@ -62,6 +71,10 @@ def atualizar(request, id):
 @csrf_exempt
 def deletar(request, id):
     if request.method == "DELETE":
+        
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             Pizza.objects.get(id = id).delete()
             return JsonResponse({"msg": "Deletado"})

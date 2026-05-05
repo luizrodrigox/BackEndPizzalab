@@ -5,10 +5,15 @@ from apps.cardapio.models import Pizza
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .forms import PedidoForm
+from utils.auth import verificar_token
 
 @csrf_exempt
 def criar(request):
     if request.method == "POST":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             data = json.loads(request.body)
         except:
@@ -39,6 +44,10 @@ def criar(request):
 
 def listar(request):
     if request.method == "GET":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         pedidos = []
         for p in Pedido.objects.all():
             pedidos.append({
@@ -54,6 +63,10 @@ def listar(request):
 
 def detalhe(request, id):
     if request.method == "GET":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             p = Pedido.objects.get(id = id)
             return JsonResponse({
@@ -70,6 +83,10 @@ def detalhe(request, id):
 @csrf_exempt
 def atualizar(request, id):
     if request.method == "PUT":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             pedido = Pedido.objects.get(id=id)
         except Pedido.DoesNotExist:
@@ -101,6 +118,10 @@ def atualizar(request, id):
 @csrf_exempt
 def deletar(request, id):
     if request.method == "DELETE":
+
+        if not verificar_token(request):
+            return JsonResponse({"erro": "Não autorizado"}, status = 401)
+        
         try:
             Pedido.objects.get(id = id).delete()
             return JsonResponse({"msg": "Deletado"})

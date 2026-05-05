@@ -21,7 +21,7 @@ from apps.core.views import home
 urlpatterns = [
     path("", home),
     path('admin/', admin.site.urls),
-
+    path('auth/', include('apps.usuarios.urls')),
     path('cardapio/', include('apps.cardapio.urls')),
     path("clientes/", include('apps.clientes.urls')),
     path("pedidos/", include('apps.pedidos.urls')),

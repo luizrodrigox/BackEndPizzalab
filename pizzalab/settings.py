@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'pizzalab.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=config('DATABASE_URL', default='sqlite:///db.sqlite3')
+        default = config('DATABASE_URL')
     )
 }
 

@@ -76,6 +76,7 @@ Pizzalab/
 | Camada | Tecnologia |
 |--------|------------|
 | **Back-end** | Python, Django, Django REST Framework, PostgreSQL |
+| **Front-end** | HTML, JavaScript |
 | **Segurança** | JWT Authentication, Django Forms, Bleach |
 | **Deploy** | Gunicorn, WhiteNoise, Render |
 | **Ferramentas** | Postman, GitHub |
@@ -100,7 +101,7 @@ Pizzalab/
 1. **Clonar o repositório**
    
 ```bash
-git clone https://github.com/SEU-USUARIO/BackEndPizzalab.git
+git clone https://github.com/luizrodrigox/BackEndPizzalab.git
 ```
 
 2. **Entrar na pasta do projeto**
